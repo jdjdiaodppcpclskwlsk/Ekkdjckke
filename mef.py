@@ -68,7 +68,7 @@ dp.message.middleware(TrackUsersMiddleware())
 dp.callback_query.middleware(CheckVerificationMiddleware())
 
 def init_all_dbs():
-    os.makedirs("database", exist_ok=True)
+    os.makedirs(os.path.join(os.path.dirname(os.path.abspath(__file__)), "database"), exist_ok=True)
     database.init_users_db()
     database.init_chats_db()
     database.init_sessions_db()
