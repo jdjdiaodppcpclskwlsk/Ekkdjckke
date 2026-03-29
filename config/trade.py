@@ -1,8 +1,13 @@
 import sqlite3
+import os
 from typing import List, Dict, Any, Optional
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.fsm.state import State, StatesGroup
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+def _db(name: str) -> str:
+    return os.path.join(BASE_DIR, "database", name)
 
 class TradeStates(StatesGroup):
     WAITING_TITLE = State()
@@ -14,7 +19,7 @@ class TradeStatus:
     DELETED = "deleted"
 
 def init_trades_db():
-    with sqlite3.connect("database/trade.db") as conn:
+    with sqlite3.connect(_db("trade.db")) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS trades (
                 trade_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,7 +37,7 @@ def init_trades_db():
 
 def create_trade(user_id: int, username: str, first_name: str,
                  title: str, offer: str, want: str) -> int:
-    with sqlite3.connect("database/trade.db") as conn:
+    with sqlite3.connect(_db("trade.db")) as conn:
         cursor = conn.execute("""
             INSERT INTO trades (user_id, username, first_name, title, offer, want, status)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -43,7 +48,7 @@ def create_trade(user_id: int, username: str, first_name: str,
         return trade_id
 
 def get_active_trades() -> List[Dict[str, Any]]:
-    with sqlite3.connect("database/trade.db") as conn:
+    with sqlite3.connect(_db("trade.db")) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.execute("""
             SELECT * FROM trades
@@ -53,7 +58,7 @@ def get_active_trades() -> List[Dict[str, Any]]:
         return [dict(row) for row in cursor.fetchall()]
 
 def get_user_trades(user_id: int) -> List[Dict[str, Any]]:
-    with sqlite3.connect("database/trade.db") as conn:
+    with sqlite3.connect(_db("trade.db")) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.execute("""
             SELECT * FROM trades
@@ -63,7 +68,7 @@ def get_user_trades(user_id: int) -> List[Dict[str, Any]]:
         return [dict(row) for row in cursor.fetchall()]
 
 def get_trade_by_id(trade_id: int) -> Optional[Dict[str, Any]]:
-    with sqlite3.connect("database/trade.db") as conn:
+    with sqlite3.connect(_db("trade.db")) as conn:
         conn.row_factory = sqlite3.Row
         cursor = conn.execute("""
             SELECT * FROM trades
@@ -73,7 +78,7 @@ def get_trade_by_id(trade_id: int) -> Optional[Dict[str, Any]]:
         return dict(row) if row else None
 
 def delete_trade(trade_id: int) -> None:
-    with sqlite3.connect("database/trade.db") as conn:
+    with sqlite3.connect(_db("trade.db")) as conn:
         conn.execute("""
             UPDATE trades SET status = ? WHERE trade_id = ?
         """, (TradeStatus.DELETED, trade_id))

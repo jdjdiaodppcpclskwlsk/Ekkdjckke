@@ -1,10 +1,15 @@
 import asyncio
 import sqlite3
+import os
 from typing import List, Tuple
 from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+def _db(name: str) -> str:
+    return os.path.join(BASE_DIR, "database", name)
 
 class MailingStates(StatesGroup):
     waiting_for_text = State()
@@ -18,11 +23,11 @@ def get_admin_menu() -> InlineKeyboardMarkup:
     return builder.as_markup()
 
 async def get_all_chats() -> List[Tuple[int]]:
-    with sqlite3.connect("database/chats.db") as conn:
+    with sqlite3.connect(_db("chats.db")) as conn:
         return conn.execute("SELECT chat_id FROM verified_chats WHERE verified = 1").fetchall()
 
 async def get_all_users() -> List[Tuple[int]]:
-    with sqlite3.connect("database/users.db") as conn:
+    with sqlite3.connect(_db("users.db")) as conn:
         return conn.execute("SELECT user_id FROM users").fetchall()
 
 async def send_mailing(bot: Bot, text: str) -> Tuple[int, int]:

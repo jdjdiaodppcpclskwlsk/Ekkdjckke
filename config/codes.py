@@ -1,14 +1,16 @@
 import json
+import os
 import aiofiles
 from typing import List, Dict, Any
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CODES_PER_PAGE = 5
 
 async def load_codes() -> List[Dict[str, Any]]:
     try:
-        async with aiofiles.open("data/codes.json", "r", encoding="utf-8") as f:
+        async with aiofiles.open(os.path.join(BASE_DIR, "data", "codes.json"), "r", encoding="utf-8") as f:
             data = json.loads(await f.read())
         codes = data.get("codes", [])
         codes.sort(key=lambda x: not x.get("active", False))
@@ -17,9 +19,13 @@ async def load_codes() -> List[Dict[str, Any]]:
         return []
 
 def format_codes_page(codes: List[Dict[str, Any]], page: int) -> str:
+    if not codes:
+        return "Кодов пока нет"
     start = page * CODES_PER_PAGE
     end = start + CODES_PER_PAGE
     page_codes = codes[start:end]
+    if not page_codes:
+        return "Кодов пока нет"
     text = ""
     for c in page_codes:
         code = c.get("code", "???")

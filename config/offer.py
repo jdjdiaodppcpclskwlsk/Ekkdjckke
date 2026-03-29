@@ -1,9 +1,14 @@
 import sqlite3
+import os
 from typing import List, Dict, Any, Optional
 from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+def _db(name: str) -> str:
+    return os.path.join(BASE_DIR, "database", name)
 
 class OfferStates(StatesGroup):
     waiting_for_name = State()
@@ -25,7 +30,7 @@ class OfferStatus:
         return texts.get(status, status)
 
 def init_offers_db():
-    with sqlite3.connect("database/offers.db") as conn:
+    with sqlite3.connect(_db("offers.db")) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS offers (
                 offer_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,7 +50,7 @@ def init_offers_db():
 
 def create_offer(user_id: int, username: str, first_name: str,
                  offer_name: str, description: str, benefit: str) -> int:
-    with sqlite3.connect("database/offers.db") as conn:
+    with sqlite3.connect(_db("offers.db")) as conn:
         cur = conn.execute("""
             INSERT INTO offers (user_id, username, first_name, offer_name, description, benefit, status)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -56,26 +61,26 @@ def create_offer(user_id: int, username: str, first_name: str,
         return oid
 
 def get_user_offers(user_id: int) -> List[Dict[str, Any]]:
-    with sqlite3.connect("database/offers.db") as conn:
+    with sqlite3.connect(_db("offers.db")) as conn:
         conn.row_factory = sqlite3.Row
         cur = conn.execute("SELECT * FROM offers WHERE user_id = ? ORDER BY created_at DESC", (user_id,))
         return [dict(row) for row in cur.fetchall()]
 
 def get_offers_by_status(status: str) -> List[Dict[str, Any]]:
-    with sqlite3.connect("database/offers.db") as conn:
+    with sqlite3.connect(_db("offers.db")) as conn:
         conn.row_factory = sqlite3.Row
         cur = conn.execute("SELECT * FROM offers WHERE status = ? ORDER BY created_at DESC", (status,))
         return [dict(row) for row in cur.fetchall()]
 
 def get_offer_by_id(offer_id: int) -> Optional[Dict[str, Any]]:
-    with sqlite3.connect("database/offers.db") as conn:
+    with sqlite3.connect(_db("offers.db")) as conn:
         conn.row_factory = sqlite3.Row
         cur = conn.execute("SELECT * FROM offers WHERE offer_id = ?", (offer_id,))
         row = cur.fetchone()
         return dict(row) if row else None
 
 def update_offer_status(offer_id: int, status: str, reviewed_by: int) -> None:
-    with sqlite3.connect("database/offers.db") as conn:
+    with sqlite3.connect(_db("offers.db")) as conn:
         conn.execute("UPDATE offers SET status = ?, reviewed_at = CURRENT_TIMESTAMP, reviewed_by = ? WHERE offer_id = ?",
                      (status, reviewed_by, offer_id))
         conn.commit()

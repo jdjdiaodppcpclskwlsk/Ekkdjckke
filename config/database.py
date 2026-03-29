@@ -1,11 +1,18 @@
 import sqlite3
+import os
 from typing import Optional, List, Tuple
 
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+DB_DIR = os.path.join(BASE_DIR, "database")
+
+def _db(name: str) -> str:
+    return os.path.join(DB_DIR, name)
+
 def get_db_connection(db_name: str):
-    return sqlite3.connect(db_name)
+    return sqlite3.connect(_db(db_name))
 
 def init_users_db():
-    with sqlite3.connect("database/users.db") as conn:
+    with sqlite3.connect(_db("users.db")) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 user_id INTEGER PRIMARY KEY,
@@ -18,7 +25,7 @@ def init_users_db():
         conn.commit()
 
 def init_chats_db():
-    with sqlite3.connect("database/chats.db") as conn:
+    with sqlite3.connect(_db("chats.db")) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS verified_chats (
                 chat_id INTEGER PRIMARY KEY,
@@ -30,7 +37,7 @@ def init_chats_db():
         conn.commit()
 
 def init_sessions_db():
-    with sqlite3.connect("database/sessions.db") as conn:
+    with sqlite3.connect(_db("sessions.db")) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS user_sessions (
                 user_id INTEGER,
@@ -42,7 +49,7 @@ def init_sessions_db():
         conn.commit()
 
 def add_user(user_id: int, first_name: str, username: str = None) -> None:
-    with sqlite3.connect("database/users.db") as conn:
+    with sqlite3.connect(_db("users.db")) as conn:
         conn.execute("""
             INSERT OR REPLACE INTO users (user_id, first_name, username, last_activity)
             VALUES (?, ?, ?, CURRENT_TIMESTAMP)
@@ -50,7 +57,7 @@ def add_user(user_id: int, first_name: str, username: str = None) -> None:
         conn.commit()
 
 def update_user_activity(user_id: int) -> None:
-    with sqlite3.connect("database/users.db") as conn:
+    with sqlite3.connect(_db("users.db")) as conn:
         conn.execute("""
             UPDATE users SET last_activity = CURRENT_TIMESTAMP
             WHERE user_id = ?
@@ -58,14 +65,14 @@ def update_user_activity(user_id: int) -> None:
         conn.commit()
 
 def get_all_users() -> List[Tuple[int, str, str]]:
-    with sqlite3.connect("database/users.db") as conn:
+    with sqlite3.connect(_db("users.db")) as conn:
         result = conn.execute(
             "SELECT user_id, first_name, username FROM users"
         ).fetchall()
         return result
 
 def add_verified_chat(chat_id: int, chat_title: str) -> None:
-    with sqlite3.connect("database/chats.db") as conn:
+    with sqlite3.connect(_db("chats.db")) as conn:
         conn.execute("""
             INSERT OR IGNORE INTO verified_chats (chat_id, chat_title, verified)
             VALUES (?, ?, 1)
@@ -73,7 +80,7 @@ def add_verified_chat(chat_id: int, chat_title: str) -> None:
         conn.commit()
 
 def remove_verified_chat(chat_id: int) -> None:
-    with sqlite3.connect("database/chats.db") as conn:
+    with sqlite3.connect(_db("chats.db")) as conn:
         conn.execute("""
             UPDATE verified_chats SET verified = 0
             WHERE chat_id = ?
@@ -83,21 +90,21 @@ def remove_verified_chat(chat_id: int) -> None:
 def check_chat_verified(chat_id: int) -> bool:
     if chat_id > 0:
         return True
-    with sqlite3.connect("database/chats.db") as conn:
+    with sqlite3.connect(_db("chats.db")) as conn:
         result = conn.execute(
             "SELECT verified FROM verified_chats WHERE chat_id = ?", (chat_id,)
         ).fetchone()
         return result is not None and result[0] == 1
 
 def get_all_verified_chats() -> List[Tuple[int, str]]:
-    with sqlite3.connect("database/chats.db") as conn:
+    with sqlite3.connect(_db("chats.db")) as conn:
         result = conn.execute(
             "SELECT chat_id, chat_title FROM verified_chats WHERE verified = 1"
         ).fetchall()
         return result
 
 def save_session(user_id: int, session_type: str, message_id: int) -> None:
-    with sqlite3.connect("database/sessions.db") as conn:
+    with sqlite3.connect(_db("sessions.db")) as conn:
         conn.execute("""
             INSERT OR REPLACE INTO user_sessions (user_id, session_type, message_id)
             VALUES (?, ?, ?)
@@ -105,7 +112,7 @@ def save_session(user_id: int, session_type: str, message_id: int) -> None:
         conn.commit()
 
 def get_session(user_id: int, session_type: str) -> Optional[int]:
-    with sqlite3.connect("database/sessions.db") as conn:
+    with sqlite3.connect(_db("sessions.db")) as conn:
         result = conn.execute(
             "SELECT message_id FROM user_sessions WHERE user_id = ? AND session_type = ?",
             (user_id, session_type)

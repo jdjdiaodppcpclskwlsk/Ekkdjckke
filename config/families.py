@@ -1,8 +1,11 @@
 import json
+import os
 import aiofiles
 from typing import Dict, Any, Optional, Tuple
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 RARITY_COLORS = {
     "Обычная": "⚪",
@@ -22,7 +25,7 @@ EMOJI_MAP = {
 
 async def load_families() -> Dict[str, Any]:
     try:
-        async with aiofiles.open("data/families.json", "r", encoding="utf-8") as f:
+        async with aiofiles.open(os.path.join(BASE_DIR, "data", "families.json"), "r", encoding="utf-8") as f:
             return json.loads(await f.read())
     except:
         return {"families": {}}

@@ -1,8 +1,11 @@
 import aiofiles
 import json
+import os
 from typing import Dict, List, Any, Optional, Tuple
 from aiogram.types import InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 RARITY_EMOJI = {
     "Обычная": "⚪",
@@ -33,7 +36,7 @@ EFFECT_EMOJI = {
 
 async def load_perks_data() -> Dict[str, Any]:
     try:
-        async with aiofiles.open("data/perks.json", "r", encoding="utf-8") as f:
+        async with aiofiles.open(os.path.join(BASE_DIR, "data", "perks.json"), "r", encoding="utf-8") as f:
             return json.loads(await f.read())
     except:
         return {"perks": {}}
